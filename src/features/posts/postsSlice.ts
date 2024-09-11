@@ -1,4 +1,4 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit'
+import { createSlice, nanoid, PayloadAction } from '@reduxjs/toolkit'
 
 // Define a TS type for the data we'll be using
 export interface Post {
@@ -20,10 +20,17 @@ const postsSlice = createSlice({
     reducers: {
         // Declare a "case reducer" named `postAdded`.
         // The type of `action.payload` will be a `Post` object.
-        postAdded(state, action: PayloadAction<Post>) {
-            // "Mutate" the existing state array, which is
-            // safe to do here because `createSlice` uses Immer inside.
-            state.push(action.payload)
+        postAdded: {
+            reducer(state, action: PayloadAction<Post>) {
+                // "Mutate" the existing state array, which is
+                // safe to do here because `createSlice` uses Immer inside.
+                state.push(action.payload)
+            },
+            prepare(title: string, content: string) {
+                return {
+                    payload: { id: nanoid(), title, content }
+                }
+            }
         },
 
         postUpdated(state, action: PayloadAction<Post>) {
