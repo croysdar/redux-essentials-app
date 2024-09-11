@@ -29,5 +29,5 @@ export default usersSlice.reducer
 
 export const selectAllUsers = (state: RootState) => state.users
 
-export const selectUsersById = (state: RootState, userId: string | null) =>
+export const selectUserById = (state: RootState, userId: string | null) =>
     state.users.find(user => user.id === userId)
