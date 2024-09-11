@@ -1,5 +1,6 @@
 import { RootState } from '@/app/store'
 import { createSlice } from '@reduxjs/toolkit'
+import { selectCurrentUsername } from '../auth/authSlice'
 
 // Define a TS type for the data we'll be using
 export interface User {
@@ -31,3 +32,16 @@ export const selectAllUsers = (state: RootState) => state.users
 
 export const selectUserById = (state: RootState, userId: string | null) =>
     state.users.find(user => user.id === userId)
+
+export const selectUserByName = (state: RootState, userName: string | null) =>
+    state.users.find(user => user.name === userName)
+
+export const selectCurrentUser = (state: RootState) => {
+    const currentUsername = selectCurrentUsername(state)
+    return selectUserByName(state, currentUsername)
+}
+
+export const selectCurrentUserID = (state: RootState) => {
+    const currentUser = selectCurrentUser(state);
+    return currentUser?.id
+}
