@@ -1,6 +1,7 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit'
+import { PayloadAction } from '@reduxjs/toolkit'
 
 import { RootState } from '@/app/store'
+import { createAppSlice } from '@/app/hooks'
 
 interface AuthState {
     username: string | null
@@ -12,15 +13,17 @@ const initialState: AuthState = {
     username: null
 }
 
-const authSlice = createSlice({
+const authSlice = createAppSlice({
     name: 'auth',
     initialState,
-    reducers: {
-        userLoggedIn(state, action: PayloadAction<string>) {
-            state.username = action.payload
-        },
-        userLoggedOut(state) {
-            state.username = null
+    reducers: create => {
+        return {
+            userLoggedIn: create.reducer<string>((state, action: PayloadAction<string>) => {
+                state.username = action.payload
+            }),
+            userLoggedOut: create.reducer((state) => {
+                state.username = null
+            })
         }
     }
 })

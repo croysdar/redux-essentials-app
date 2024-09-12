@@ -1,6 +1,6 @@
 import { RootState } from '@/app/store'
-import { createSlice } from '@reduxjs/toolkit'
 import { selectCurrentUsername } from '../auth/authSlice'
+import { createAppSlice } from '@/app/hooks'
 
 // Define a TS type for the data we'll be using
 export interface User {
@@ -16,7 +16,7 @@ const initialState: User[] = [
 ]
 
 // Create the slice and pass in the initial state
-const usersSlice = createSlice({
+const usersSlice = createAppSlice({
     name: 'users',
     initialState,
     reducers: { },
