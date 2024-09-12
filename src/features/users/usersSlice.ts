@@ -1,6 +1,7 @@
 import { RootState } from '@/app/store'
 import { selectCurrentUsername } from '../auth/authSlice'
 import { createAppSlice } from '@/app/hooks'
+import { client } from '@/api/client'
 
 // Define a TS type for the data we'll be using
 export interface User {
@@ -9,21 +10,32 @@ export interface User {
 }
 
 // Create an initial state value for the reducer, with that type
-const initialState: User[] = [
-    { id: '0', name: 'Tianna Jenkins' },
-    { id: '1', name: 'Kevin Grant' },
-    { id: '2', name: 'Madison Price' }
-]
+const initialState: User[] = []
 
 // Create the slice and pass in the initial state
 const usersSlice = createAppSlice({
     name: 'users',
     initialState,
-    reducers: { },
+    reducers: create => {
+        return {
+            fetchUsers: create.asyncThunk(
+                async () => {
+                    const response = await client.get<User[]>('fakeApi/users')
+                    return response.data
+                },
+                {
+                    fulfilled: (state, action) => {
+                        return action.payload
+                    }
+
+                }
+            )
+        }
+    },
 })
 
 // Export the auto-generated action creator with the same name
-export const { } = usersSlice.actions
+export const { fetchUsers } = usersSlice.actions
 
 // Export the generated reducer function
 export default usersSlice.reducer
