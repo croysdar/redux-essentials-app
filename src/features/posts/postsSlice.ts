@@ -31,6 +31,7 @@ interface PostsState {
 type Status = 'idle' | 'pending' | 'succeeded' | 'failed'
 
 type PostUpdate = Pick<Post, 'id' | 'title' | 'content'>
+type NewPost = Pick<Post, 'title' | 'content' | 'user'>
 
 const initialReactions: Reactions = {
     thumbsUp: 0,
@@ -125,6 +126,19 @@ const postsSlice = createAppSlice({
                         state.error = action.error.message ?? 'Unknown Error'
                     }
                 }
+            ),
+
+            addNewPost : create.asyncThunk(
+                async(initialPost: NewPost) => {
+                    const response = await client.post<Post>('fakeApi/posts', initialPost)
+                    return response.data
+                },
+                {
+                    fulfilled: (state, action) => {
+                        console.log(action.payload)
+                        state.data.push(action.payload)
+                    }
+                }
             )
         }
     },
@@ -146,7 +160,7 @@ const postsSlice = createAppSlice({
 })
 
 // Export the auto-generated action creator with the same name
-export const { postAdded, postUpdated, reactionAdded, fetchPosts } = postsSlice.actions
+export const { postAdded, addNewPost, postUpdated, reactionAdded, fetchPosts } = postsSlice.actions
 
 // Export the generated reducer function
 export default postsSlice.reducer
