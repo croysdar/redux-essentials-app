@@ -1,9 +1,7 @@
-import { createSlice } from '@reduxjs/toolkit'
-
 import { client } from '@/api/client'
 
 import type { RootState } from '@/app/store'
-import { createAppAsyncThunk } from '@/app/withTypes'
+import { createAppSlice } from '@/app/hooks'
 
 export interface ServerNotification {
     id: string
@@ -12,34 +10,85 @@ export interface ServerNotification {
     user: string
 }
 
-export const fetchNotifications = createAppAsyncThunk(
-    'notifications/fetchNotifications',
-    async (_unused, thunkApi) => {
-        const allNotifications = selectAllNotifications(thunkApi.getState())
-        const [latestNotification] = allNotifications
-        const latestTimestamp = latestNotification ? latestNotification.date : ''
-        const response = await client.get<ServerNotification[]>(
-            `/fakeApi/notifications?since=${latestTimestamp}`
-        )
-        return response.data
-    }
-)
+export interface ClientNotification extends ServerNotification {
+    read: boolean
+    isNew: boolean
+}
 
-const initialState: ServerNotification[] = []
+const initialState: ClientNotification[] = []
 
-const notificationsSlice = createSlice({
+const notificationsSlice = createAppSlice({
     name: 'notifications',
     initialState,
-    reducers: {},
-    extraReducers(builder) {
-        builder.addCase(fetchNotifications.fulfilled, (state, action) => {
-            state.push(...action.payload)
-            // Sort with newest first
-            state.sort((a, b) => b.date.localeCompare(a.date))
-        })
+    reducers: create => {
+        return {
+            allNotificationsRead: create.reducer(
+                (state) => {
+                    state.forEach(notification => {
+                        notification.read = true
+                    })
+                }
+            ),
+            fetchNotifications: create.asyncThunk(
+                async (_unused, thunkApi) => {
+                    const allNotifications = selectAllNotifications(thunkApi.getState() as RootState) as ClientNotification[]
+                    const [latestNotification] = allNotifications
+                    const latestTimestamp = latestNotification ? latestNotification.date : ''
+
+                    const response = await client.get<ServerNotification[]>(
+                        `/fakeApi/notifications?since=${latestTimestamp}`
+                    )
+                    return response.data
+                },
+                {
+                    options: {
+                        // condition(_unused, thunkApi) {
+                        //     const { notifications } = thunkApi.getState() as RootState
+                        //     if (notifications.status !== 'idle')  {
+                        //         return false;
+                        //     }
+                        // }
+                    },
+                    // pending: (state) => {
+                    // state.status = 'pending';
+                    // },
+                    fulfilled: (state, action) => {
+                        // state.status = 'succeeded';
+                        const notificationsWithMetadata: ClientNotification[] =
+                            action.payload.map(notification => ({
+                                ...notification,
+                                read: false,
+                                isNew: true
+                            }))
+
+                        state.forEach(notification => {
+                            notification.isNew = !notification.read
+                        })
+
+                        state.push(...notificationsWithMetadata)
+                        state.sort((a, b) => b.date.localeCompare(a.date)); // Sort by date
+                    },
+                    // rejected: (state, action) => {
+                    // state.status = 'failed';
+                    // state.error = action.error.message ?? 'Unknown Error';
+                    // }
+                }
+            )
+
+        }
     }
 })
+
+export const { allNotificationsRead, fetchNotifications } = notificationsSlice.actions
 
 export default notificationsSlice.reducer
 
 export const selectAllNotifications = (state: RootState) => state.notifications
+
+export const selectUnreadNotificationsCount = (state: RootState) => {
+    const allNotifications = selectAllNotifications(state)
+    const unreadNotifications = allNotifications.filter(
+        notification => !notification.read
+    )
+    return unreadNotifications.length
+}

@@ -134,7 +134,6 @@ const postsSlice = createAppSlice({
                 },
                 {
                     fulfilled: (state, action) => {
-                        console.log(action.payload)
                         state.data.push(action.payload)
                     }
                 }
