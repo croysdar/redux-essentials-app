@@ -3,8 +3,8 @@ import React, { useState } from 'react'
 import { useAppDispatch, useAppSelector } from '@/app/hooks'
 
 import { addNewPost } from './postsSlice'
-import { selectCurrentUserID } from '../users/usersSlice'
 import { Spinner } from '@/components/Spinner'
+import { selectCurrentUserID } from '../auth/authSlice'
 
 // TS types for the input fields
 // See: https://epicreact.dev/how-to-type-a-react-form-on-submit-handler/

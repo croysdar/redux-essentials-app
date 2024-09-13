@@ -3,13 +3,13 @@ import { createAppSlice } from '@/app/hooks'
 import { client } from '@/api/client'
 
 interface AuthState {
-    username: string | null
+    userId: string | null
 }
 
 const initialState: AuthState = {
     // Note: a real app would probably have more complex auth state,
     // but for this example we'll keep things simple
-    username: null
+    userId: null
 }
 
 const authSlice = createAppSlice({
@@ -24,7 +24,7 @@ const authSlice = createAppSlice({
                 },
                 {
                     fulfilled: (state, action) => {
-                        state.username = action.payload
+                        state.userId = action.payload
                     }
                 }
             ),
@@ -34,7 +34,7 @@ const authSlice = createAppSlice({
                 },
                 {
                     fulfilled: (state) => {
-                        state.username = null
+                        state.userId = null
                     }
                 }
             ),
@@ -44,6 +44,6 @@ const authSlice = createAppSlice({
 
 export const { login, logout } = authSlice.actions
 
-export const selectCurrentUsername = (state: RootState) => state.auth.username
+export const selectCurrentUserID = (state: RootState) => state.auth.userId
 
 export default authSlice.reducer

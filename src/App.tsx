@@ -8,7 +8,7 @@ import { PostsMainPage } from './features/posts/PostsMainPage'
 import { SinglePostPage } from './features/posts/SinglePostPage'
 import { EditPostForm } from './features/posts/EditPostForm'
 import { LoginPage } from './features/auth/LoginPage'
-import { selectCurrentUsername } from './features/auth/authSlice'
+import { selectCurrentUserID } from './features/auth/authSlice'
 
 import { useAppSelector } from './app/hooks'
 import { UsersList } from './features/users/UsersList'
@@ -16,9 +16,9 @@ import { UserPage } from './features/users/UserPage'
 import { NotificationsList } from './features/notifications/NotificationsList'
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const username = useAppSelector(selectCurrentUsername)
+  const userId = useAppSelector(selectCurrentUserID)
 
-  if (!username) {
+  if (!userId) {
     return <Navigate to="/" replace />
   }
 

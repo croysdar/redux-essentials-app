@@ -1,7 +1,8 @@
 import { RootState } from '@/app/store'
-import { selectCurrentUsername } from '../auth/authSlice'
 import { createAppSlice } from '@/app/hooks'
 import { client } from '@/api/client'
+import { createEntityAdapter } from '@reduxjs/toolkit'
+import { selectCurrentUserID } from '../auth/authSlice'
 
 // Define a TS type for the data we'll be using
 export interface User {
@@ -9,8 +10,9 @@ export interface User {
     name: string
 }
 
-// Create an initial state value for the reducer, with that type
-const initialState: User[] = []
+const usersAdapter = createEntityAdapter<User>()
+
+const initialState = usersAdapter.getInitialState()
 
 // Create the slice and pass in the initial state
 const usersSlice = createAppSlice({
@@ -24,10 +26,7 @@ const usersSlice = createAppSlice({
                     return response.data
                 },
                 {
-                    fulfilled: (state, action) => {
-                        return action.payload
-                    }
-
+                    fulfilled: usersAdapter.setAll
                 }
             )
         }
@@ -40,20 +39,13 @@ export const { fetchUsers } = usersSlice.actions
 // Export the generated reducer function
 export default usersSlice.reducer
 
-export const selectAllUsers = (state: RootState) => state.users
-
-export const selectUserById = (state: RootState, userId: string | null) =>
-    state.users.find(user => user.id === userId)
-
-export const selectUserByName = (state: RootState, userName: string | null) =>
-    state.users.find(user => user.name === userName)
+export const {
+    selectAll: selectAllUsers,
+    selectById: selectUserById
+} = usersAdapter.getSelectors((state: RootState) => state.users)
 
 export const selectCurrentUser = (state: RootState) => {
-    const currentUsername = selectCurrentUsername(state)
-    return selectUserByName(state, currentUsername)
-}
-
-export const selectCurrentUserID = (state: RootState) => {
-    const currentUser = selectCurrentUser(state);
-    return currentUser?.id
+    const currentUserId = selectCurrentUserID(state) as string
+    if (!currentUserId) {return}
+    return selectUserById(state, currentUserId)
 }
