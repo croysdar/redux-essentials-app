@@ -2,6 +2,7 @@ import { client } from '@/api/client'
 
 import type { RootState } from '@/app/store'
 import { createAppSlice } from '@/app/hooks'
+import { createEntityAdapter } from '@reduxjs/toolkit'
 
 export interface ServerNotification {
     id: string
@@ -15,7 +16,11 @@ export interface ClientNotification extends ServerNotification {
     isNew: boolean
 }
 
-const initialState: ClientNotification[] = []
+const notificationsAdapter = createEntityAdapter<ClientNotification>({
+    sortComparer: (a,b) => b.date.localeCompare(a.date)
+})
+
+const initialState = notificationsAdapter.getInitialState()
 
 const notificationsSlice = createAppSlice({
     name: 'notifications',
@@ -24,7 +29,7 @@ const notificationsSlice = createAppSlice({
         return {
             allNotificationsRead: create.reducer(
                 (state) => {
-                    state.forEach(notification => {
+                    Object.values(state.entities).forEach(notification => {
                         notification.read = true
                     })
                 }
@@ -61,12 +66,13 @@ const notificationsSlice = createAppSlice({
                                 isNew: true
                             }))
 
-                        state.forEach(notification => {
+                        Object.values(state.entities).forEach(notification => {
                             notification.isNew = !notification.read
                         })
 
-                        state.push(...notificationsWithMetadata)
-                        state.sort((a, b) => b.date.localeCompare(a.date)); // Sort by date
+                        // state.push(...notificationsWithMetadata)
+                        // state.sort((a, b) => b.date.localeCompare(a.date)); // Sort by date
+                        notificationsAdapter.upsertMany(state, notificationsWithMetadata)
                     },
                     // rejected: (state, action) => {
                     // state.status = 'failed';
@@ -83,7 +89,8 @@ export const { allNotificationsRead, fetchNotifications } = notificationsSlice.a
 
 export default notificationsSlice.reducer
 
-export const selectAllNotifications = (state: RootState) => state.notifications
+export const {selectAll: selectAllNotifications } = 
+    notificationsAdapter.getSelectors((state: RootState) => state.notifications)
 
 export const selectUnreadNotificationsCount = (state: RootState) => {
     const allNotifications = selectAllNotifications(state)
