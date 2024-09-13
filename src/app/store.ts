@@ -4,6 +4,7 @@ import postsReducer from '@/features/posts/postsSlice'
 import usersReducer from '@/features/users/usersSlice'
 import authReducer from '@/features/auth/authSlice'
 import notificationsReducer from '@/features/notifications/notificationsSlice'
+import { listenerMiddleware } from './listenerMiddleware'
 
 
 export const store = configureStore({
@@ -13,7 +14,10 @@ export const store = configureStore({
         posts: postsReducer,
         users: usersReducer,
         notifications: notificationsReducer
-    }
+    },
+    // preserve existing middleware, but add the listener to the beginning of the middleware array
+    middleware: getDefaultMiddleware => 
+        getDefaultMiddleware().prepend(listenerMiddleware.middleware)
 })
 
 // Infer the type of `store`
