@@ -1,5 +1,5 @@
 import { RootState } from '@/app/store'
-import { nanoid, PayloadAction } from '@reduxjs/toolkit'
+import { createEntityAdapter, createSelector, EntityState, PayloadAction } from '@reduxjs/toolkit'
 import { logout } from '../auth/authSlice'
 import { client } from '@/api/client'
 import { createAppSlice } from '@/app/hooks'
@@ -11,6 +11,7 @@ export interface Reactions {
     rocket: number
     eyes: number
 }
+export type ReactionName = keyof Reactions
 
 // Define a TS type for the data we'll be using
 export interface Post {
@@ -22,32 +23,25 @@ export interface Post {
     reactions: Reactions
 }
 
-interface PostsState {
-    data: Post[]
+interface PostsState extends EntityState<Post, string> {
     status: Status
     error: string | null
 }
+
+const postsAdapter = createEntityAdapter<Post>({
+    sortComparer: (a,b) => b.date.localeCompare(a.date)
+})
 
 type Status = 'idle' | 'pending' | 'succeeded' | 'failed'
 
 type PostUpdate = Pick<Post, 'id' | 'title' | 'content'>
 type NewPost = Pick<Post, 'title' | 'content' | 'user'>
 
-const initialReactions: Reactions = {
-    thumbsUp: 0,
-    tada: 0,
-    heart: 0,
-    rocket: 0,
-    eyes: 0,
-}
-export type ReactionName = keyof Reactions
-
 // Create an initial state value for the reducer, with that type
-const initialState: PostsState = {
-    data: [],
+const initialState: PostsState = postsAdapter.getInitialState({
     status: 'idle',
-    error: null,
-}
+    error: null
+})
 
 const sliceName = 'posts'
 // Create the slice and pass in the initial state
@@ -56,39 +50,15 @@ const postsSlice = createAppSlice({
     initialState,
     reducers: create => {
         return {
-            postAdded: create.preparedReducer(
-                (title: string, content: string, userId: string) => {
-                    return {
-                        payload: {
-                            id: nanoid(),
-                            title,
-                            content,
-                            user: userId,
-                            date: new Date().toISOString(),
-                            reactions: initialReactions
-                        }
-                    }
-                },
-                (state, action: PayloadAction<Post>) => {
-                    // "Mutate" the existing state array, which is
-                    // safe to do here because `createSlice` uses Immer inside.
-                    state.data.push(action.payload)
-                },
-            ),
-
             postUpdated: create.reducer<PostUpdate>((state, action: PayloadAction<PostUpdate>) => {
                 const { id, title, content } = action.payload
-                const existingPost = state.data.find(post => post.id === id)
-                if (existingPost) {
-                    existingPost.title = title
-                    existingPost.content = content
-                }
+                postsAdapter.updateOne(state, { id, changes: { title, content } })
             }),
 
             reactionAdded: create.reducer<{ postId: string; reaction: ReactionName }>(
                 (state, action) => {
                     const { postId, reaction } = action.payload
-                    const existingPost = state.data.find(post => post.id === postId)
+                    const existingPost = state.entities[postId]
                     if (existingPost) {
                         // increment chosen reaction on chosen post
                         existingPost.reactions[reaction]++
@@ -118,7 +88,7 @@ const postsSlice = createAppSlice({
                     fulfilled: (state, action) => {
                         state.status = 'succeeded'
                         // Add any fetched posts to the array
-                        state.data.push(...action.payload)
+                        postsAdapter.setAll(state, action.payload)
                     },
                     rejected: (state, action) => {
                         state.status = 'failed'
@@ -127,15 +97,16 @@ const postsSlice = createAppSlice({
                 }
             ),
 
-            addNewPost : create.asyncThunk(
-                async(initialPost: NewPost) => {
+            addNewPost: create.asyncThunk(
+                async (initialPost: NewPost) => {
                     const response = await client.post<Post>('fakeApi/posts', initialPost)
                     return response.data
                 },
                 {
-                    fulfilled: (state, action) => {
-                        state.data.push(action.payload)
-                    }
+                    // fulfilled: (state, action) => {
+                    //     state.data.push(action.payload)
+                    // }
+                    fulfilled: postsAdapter.addOne
                 }
             )
         }
@@ -158,21 +129,33 @@ const postsSlice = createAppSlice({
 })
 
 // Export the auto-generated action creator with the same name
-export const { postAdded, addNewPost, postUpdated, reactionAdded, fetchPosts } = postsSlice.actions
+export const { addNewPost, postUpdated, reactionAdded, fetchPosts } = postsSlice.actions
 
 // Export the generated reducer function
 export default postsSlice.reducer
 
-export const selectAllPosts = (state: RootState) => state.posts.data
+export const {
+    selectAll: selectAllPosts,
+    selectById: selectPostById,
+    selectIds: selectPostIds
+} = postsAdapter.getSelectors((state: RootState) => state.posts)
 
-export const selectPostById = (state: RootState, postId: string | null) =>
-    state.posts.data.find(post => post.id === postId)
+// using createSelector makes this memoized
+export const selectPostsByUser = createSelector(
+    // Pass in one or more "input selectors"
+    [
+        // we can pass in an existing selector function that
+        // reads something from the root `state` and returns it
+        selectAllPosts,
+        // and another function that extracts one of the arguments
+        // and passes that onward
+        (state: RootState, userId: string) => userId
+    ],
+    // the output function gets those values as its arguments,
+    // and will run when either input value changes
+    (posts, userId) => posts.filter(post => post.user === userId)
+)
 
-export const selectPostsByUser = (state: RootState, userId: string) => {
-    const allPosts = selectAllPosts(state)
-
-    return allPosts.filter(post => post.user === userId)
-}
 
 export const selectPostsStatus = (state: RootState) => state.posts.status
 export const selectPostsError = (state: RootState) => state.posts.error
