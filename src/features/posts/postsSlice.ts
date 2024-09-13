@@ -42,8 +42,6 @@ const initialReactions: Reactions = {
 }
 export type ReactionName = keyof Reactions
 
-const sliceName = 'posts'
-
 // Create an initial state value for the reducer, with that type
 const initialState: PostsState = {
     data: [],
@@ -51,6 +49,7 @@ const initialState: PostsState = {
     error: null,
 }
 
+const sliceName = 'posts'
 // Create the slice and pass in the initial state
 const postsSlice = createAppSlice({
     name: sliceName,
@@ -104,7 +103,7 @@ const postsSlice = createAppSlice({
                 },
                 {
                     options: {
-                        condition(arg, thunkApi) {
+                        condition(_unused, thunkApi) {
                             const { posts } = thunkApi.getState() as RootState
                             if (posts.status !== 'idle') {
                                 return false
