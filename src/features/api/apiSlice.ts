@@ -12,13 +12,16 @@ export const apiSlice = createApi({
     reducerPath: 'api',
     // All of our requests will have URLs starting with '/fakeApi'
     baseQuery: fetchBaseQuery({ baseUrl: '/fakeApi' }),
+    // A "tag" is a string or small object that lets you give identifiers to certain types of data, and "invalidate" portions of the cache.
+    tagTypes: ['Post'],
     // The "endpoints" represent operations and requests for this server
     endpoints: builder => ({
         // The `getPosts` endpoint is a "query" operation that returns data.
         // The return value is a `Post[]` array, and it takes no arguments.
         getPosts: builder.query<Post[], void>({
             // The URL for the request is '/fakeApi/posts'
-            query: () => '/posts'
+            query: () => '/posts',
+            providesTags: ['Post']
         }),
         getPost: builder.query<Post, string>({
             // The URL for the request is '/fakeApi/posts'
@@ -32,8 +35,9 @@ export const apiSlice = createApi({
                 method: 'POST',
                 // Include the entire post object as the body of the request
                 body: initialPost
-
-            })
+            }),
+            // a set of tags that are invalidated every time that mutation runs
+            invalidatesTags: ['Post']
         })
     })
 })
