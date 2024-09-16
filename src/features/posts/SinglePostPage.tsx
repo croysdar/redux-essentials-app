@@ -20,14 +20,21 @@ export const SinglePostPage = () => {
         isSuccess
     } = useGetPostQuery(postId!)
 
-    let content : React.ReactNode
+    let content: React.ReactNode
 
+
+    if (!post) {
+        content =
+            <section>
+                <h2>Post not found!</h2>
+            </section>
+    }
     if (isFetching) {
-        content = <Spinner text="Loading..."/>
+        content = <Spinner text="Loading..." />
     }
     else if (isSuccess) {
         const canEdit = currentUserID === post.user
-        content = 
+        content =
             <article className="post">
                 <h2>{post.title}</h2>
                 <PostAuthor userId={post.user} />
@@ -39,15 +46,6 @@ export const SinglePostPage = () => {
                 <ReactionButtons post={post} />
             </article>
     }
-
-    if (!post) {
-        return (
-            <section>
-                <h2>Post not found!</h2>
-            </section>
-        )
-    }
-
 
     return <section>{content}</section>
 }
