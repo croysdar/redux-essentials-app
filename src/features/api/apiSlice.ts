@@ -24,7 +24,18 @@ export const apiSlice = createApi({
             // The URL for the request is '/fakeApi/posts'
             query: postId => `/posts/${postId}`
         }),
+        addNewPost: builder.mutation<Post, NewPost>({
+            query: initialPost => ({
+                // The HTTP URL will be '/fakeApi/posts'
+                url: '/posts',
+                // This is an HTTP POST request, sending an update
+                method: 'POST',
+                // Include the entire post object as the body of the request
+                body: initialPost
+
+            })
+        })
     })
 })
 
-export const { useGetPostsQuery, useGetPostQuery } = apiSlice
+export const { useGetPostsQuery, useGetPostQuery, useAddNewPostMutation } = apiSlice

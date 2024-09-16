@@ -35,8 +35,8 @@ const postsAdapter = createEntityAdapter<Post>({
 
 type Status = 'idle' | 'pending' | 'succeeded' | 'failed'
 
-type PostUpdate = Pick<Post, 'id' | 'title' | 'content'>
-type NewPost = Pick<Post, 'title' | 'content' | 'user'>
+export type PostUpdate = Pick<Post, 'id' | 'title' | 'content'>
+export type NewPost = Pick<Post, 'title' | 'content' | 'user'>
 
 // Create an initial state value for the reducer, with that type
 const initialState: PostsState = postsAdapter.getInitialState({
