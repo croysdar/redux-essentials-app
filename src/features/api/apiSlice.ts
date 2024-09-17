@@ -3,7 +3,7 @@ import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react'
 
 // Use the `Post` type we've already defined in `postsSlice`,
 // and then re-export it for ease of use
-import type { NewPost, Post, PostUpdate } from '@/features/posts/postsSlice'
+import type { NewPost, Post, PostUpdate, ReactionName } from '@/features/posts/postsSlice'
 export type { Post }
 
 // Define our single API slice object
@@ -51,6 +51,16 @@ export const apiSlice = createApi({
                 body: post
             }),
             invalidatesTags: (result, error, arg) => [{ type: 'Post', id: arg.id }]
+        }),
+        addReaction: builder.mutation<Post, { postId: string; reaction: ReactionName }>({
+            query: ({ postId, reaction }) => ({
+                url: `posts/${postId}/reactions`,
+                method: 'POST',
+                body: { reaction }
+            }),
+            invalidatesTags: (result, error, arg) => [
+                { type: 'Post', id: arg.postId }
+            ]
         })
     })
 })
@@ -59,5 +69,6 @@ export const {
     useGetPostsQuery,
     useGetPostQuery,
     useAddNewPostMutation,
-    useEditPostMutation
+    useEditPostMutation,
+    useAddReactionMutation
 } = apiSlice
