@@ -5,20 +5,25 @@ import { TimeAgo } from '@/components/TimeAgo'
 
 import { PostAuthor } from '@/features/posts/PostAuthor'
 
-import { allNotificationsRead, selectAllNotifications } from './notificationsSlice'
+import { allNotificationsRead, selectMetadataEntities, useGetNotificationsQuery } from './notificationsSlice'
 import classNames from 'classnames'
 
 export const NotificationsList = () => {
-    const notifications = useAppSelector(selectAllNotifications)
     const dispatch = useAppDispatch();
+    const { data: notifications = [] } = useGetNotificationsQuery()
+    const notificationsMetadata = useAppSelector(selectMetadataEntities)
 
     useLayoutEffect(() => {
+        // set all notifications to read when this page is open
         dispatch(allNotificationsRead())
     })
 
     const renderedNotifications = notifications.map(notification => {
+        // Get the metadata object matching this notification
+        const metadata = notificationsMetadata[notification.id]
+
         const notificationClassName = classNames('notification', {
-            new: notification.isNew
+            new: metadata.isNew
         })
 
         return (
